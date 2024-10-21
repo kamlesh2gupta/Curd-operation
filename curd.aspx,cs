@@ -1,0 +1,131 @@
+using System;
+using System.Data.SqlClient;
+using System.Web.UI.WebControls;
+
+namespace _24August
+{
+    public partial class crud : System.Web.UI.Page
+    {
+        private readonly string connectionString = "Server=DESKTOP-0UGHJCO\\MSSQLSERVERINVEN;Database=registationForm;Trusted_Connection=True;";
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                BindGridView();
+            }
+        }
+
+        private void BindGridView()
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string query = "SELECT * FROM student";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    connection.Open();
+                    SqlDataReader reader = command.ExecuteReader();
+                    grd_view.DataSource = reader;
+                    grd_view.DataBind();
+                }
+            }
+        }
+
+        // Edit row
+        protected void grd_view_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+            grd_view.EditIndex = e.NewEditIndex;
+            BindGridView();
+        }
+
+        // Cancel edit
+        protected void grd_view_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        {
+            grd_view.EditIndex = -1;
+            BindGridView();
+        }
+
+        // Update row
+        protected void grd_view_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        {
+            GridViewRow row = grd_view.Rows[e.RowIndex];
+            int studentId = Convert.ToInt32(grd_view.DataKeys[e.RowIndex].Values[0]);
+            string firstName = (row.FindControl("txtfirstEdit") as TextBox).Text;
+            string lastName = (row.FindControl("txtlastEdit") as TextBox).Text;
+            string city = (row.FindControl("txtcityEdit") as TextBox).Text;
+            string phone = (row.FindControl("txtphoneEdit") as TextBox).Text;
+            string address = (row.FindControl("lbladdressEdit") as TextBox).Text;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE student SET Firstname=@Firstname, Lastname=@Lastname, City=@City, Phone=@Phone, Address=@Address WHERE id=@StudentID";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@StudentID", studentId);
+                    command.Parameters.AddWithValue("@Firstname", firstName);
+                    command.Parameters.AddWithValue("@Lastname", lastName);
+                    command.Parameters.AddWithValue("@City", city);
+                    command.Parameters.AddWithValue("@Phone", phone);
+                    command.Parameters.AddWithValue("@Address", address);
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            grd_view.EditIndex = -1;
+            BindGridView();
+        }
+
+        // Delete row
+        protected void grd_view_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            int studentId = Convert.ToInt32(grd_view.DataKeys[e.RowIndex].Values[0]);
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string query = "DELETE FROM student WHERE id=@StudentID";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@StudentID", studentId);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            BindGridView();
+        }
+
+        protected void btnInsert_Click(object sender, EventArgs e)
+        {
+            string firstName = txtFirstNameInsert.Text;
+            string lastName = txtLastNameInsert.Text;
+            string city = txtCityInsert.Text;
+            string phone = txtPhoneInsert.Text;
+            string address = txtAddressInsert.Text;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string query = "INSERT INTO student (Firstname, Lastname, City, Phone, Address) VALUES (@Firstname, @Lastname, @City, @Phone, @Address)";
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Firstname", firstName);
+                    command.Parameters.AddWithValue("@Lastname", lastName);
+                    command.Parameters.AddWithValue("@City", city);
+                    command.Parameters.AddWithValue("@Phone", phone);
+                    command.Parameters.AddWithValue("@Address", address);
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            // Clear the form after insertion
+            txtFirstNameInsert.Text = "";
+            txtLastNameInsert.Text = "";
+            txtCityInsert.Text = "";
+            txtPhoneInsert.Text = "";
+            txtAddressInsert.Text = "";
+
+            BindGridView();
+        }
+
+    }
+}
